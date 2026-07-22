@@ -1,0 +1,38 @@
+flowchart TD
+    %% Define Styles
+    classDef inputStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1;
+    classDef processStyle fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100;
+    classDef decisionStyle fill:#ede7f6,stroke:#4527a0,stroke-width:2px,color:#4a148c;
+    classDef outputStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
+
+    %% Elements
+    User[Input: User Taste Profile<br>Genre, Mood, Target Energy]:::inputStyle
+    CSV[(Data: Expanded songs.csv)]:::inputStyle
+    Loop[The Loop: Evaluate Each Song]:::processStyle
+    
+    GenreCheck{Genre Matches?}:::decisionStyle
+    GenreYes[Add 2.0 Points]:::processStyle
+    GenreNo[Add 0.0 Points]:::processStyle
+    
+    MoodCheck{Mood Matches?}:::decisionStyle
+    MoodYes[Add 1.0 Point]:::processStyle
+    MoodNo[Add 0.0 Points]:::processStyle
+    
+    EnergyCalc[Calculate Energy Distance<br>Similarity = 1.0 - absScore]:::processStyle
+    
+    Sum[Sum Total Score<br>Genre + Mood + Energy]:::processStyle
+    Rank[Sort Songs Descending]:::processStyle
+    Output[Output: Top K Recommendations]:::outputStyle
+
+    %% Connections
+    User --> Loop
+    CSV --> Loop
+    Loop --> GenreCheck
+    
+    GenreCheck -- Yes --> GenreYes --> MoodCheck
+    GenreCheck -- No --> GenreNo --> MoodCheck
+    
+    MoodCheck -- Yes --> MoodYes --> EnergyCalc
+    MoodCheck -- No --> MoodNo --> EnergyCalc
+    
+    EnergyCalc --> Sum --> Rank --> Output

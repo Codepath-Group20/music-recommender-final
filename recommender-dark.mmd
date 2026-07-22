@@ -1,0 +1,40 @@
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    %% Define Dark Mode Styles
+    classDef inputStyle fill:#1a365d,stroke:#3182ce,stroke-width:2px,color:#90cdf4;
+    classDef processStyle fill:#2c5282,stroke:#4299e1,stroke-width:2px,color:#ebf8ff;
+    classDef decisionStyle fill:#44337a,stroke:#805ad5,stroke-width:2px,color:#e9d8fd;
+    classDef outputStyle fill:#22543d,stroke:#48bb78,stroke-width:2px,color:#c6f6d5;
+
+    %% Elements
+    User[Input: User Taste Profile<br>Genre, Mood, Target Energy]:::inputStyle
+    CSV[(Data: Expanded songs.csv)]:::inputStyle
+    Loop[The Loop: Evaluate Each Song]:::processStyle
+    
+    GenreCheck{Genre Matches?}:::decisionStyle
+    GenreYes[Add 2.0 Points]:::processStyle
+    GenreNo[Add 0.0 Points]:::processStyle
+    
+    MoodCheck{Mood Matches?}:::decisionStyle
+    MoodYes[Add 1.0 Point]:::processStyle
+    MoodNo[Add 0.0 Points]:::processStyle
+    
+    EnergyCalc[Calculate Energy Distance<br>Similarity = 1.0 - absScore]:::processStyle
+    
+    Sum[Sum Total Score<br>Genre + Mood + Energy]:::processStyle
+  
+    Rank[Sort Songs Descending]:::processStyle
+    Output[Output: Top K Recommendations]:::outputStyle
+
+    %% Connections
+    User --> Loop
+    CSV --> Loop
+    Loop --> GenreCheck
+    
+    GenreCheck -- Yes --> GenreYes --> MoodCheck
+    GenreCheck -- No --> GenreNo --> MoodCheck
+    
+    MoodCheck -- Yes --> MoodYes --> EnergyCalc
+    MoodCheck -- No --> MoodNo --> EnergyCalc
+    
+    EnergyCalc --> Sum --> Rank --> Output

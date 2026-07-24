@@ -1,170 +1,81 @@
-# 🎧 Music Recommender Simulation
+# 🎧 Music Recommender System (Vector Engine & Hybrid Pipeline)
 
 ## Project Summary
-This project features a simplified, content-based music recommendation engine written in Python. The simulation parses a multi-layered catalog of tracks, constructs a user taste profile, evaluates each individual song using a weighted scoring algorithm, and returns top-ranked recommendation lists. By examining the interplay between discrete categorical matching and continuous numerical feature distance calculations, this system serves as an exploration of how basic sorting rules can introduce structural behavior and algorithmic biases.
+This project features a content-based music recommendation engine written in Python. It includes both a legacy **rule-based point accumulator** and an upgraded **5D vector cosine similarity engine**. 
+
+By comparing additive string matching against continuous multi-dimensional vector space calculations, this project explores how sorting algorithms handle structural bias and acoustic feature alignment.
 
 ---
 
-## How The System Works
+## Architecture & Scoring Engines
 
-### Core Architecture
-* **Song Attributes:** Each track in our catalog contains categorical tags (`genre`, `mood`) and continuous features scored from `0.0` to `1.0` (`energy`, `danceability`, `acousticness`).
-* **User Profile:** Defines explicit preferences: a favorite genre, a desired mood target, and a specific target energy level.
-* **The Scoring Loop:** The engine sweeps the entire active song database, evaluates each track against user parameters, aggregates scores, and returns the top $K$ tracks sorted in descending order.
+### 1. Vector Cosine Similarity Engine (New)
+Converts 5 numerical audio features into a normalized 5D feature vector v to evaluate track similarity via **Cosine Similarity**:
 
-### Algorithm Recipes
+    v = [ energy, tempo_bpm (normalized), valence, danceability, acousticness ]
 
-#### Baseline Pipeline (`score_song`)
-Our original rule-based algorithm operates via an additive point-accumulator system:
-1. **Genre Match (`+2.0` points):** Direct bonus if the song category matches the user's favorite genre string exactly.
-2. **Mood Match (`+1.0` point):** Secondary bonus if the semantic mood label matches exactly.
-3. **Energy Proximity (Up to `+1.0` point):** A continuous fraction calculated using absolute mathematical distance:
+* **Tempo Normalization:** Min-max scaled across the dataset to bound `tempo_bpm` between 0.0 and 1.0.
+* **Zero Division Guard:** Includes an epsilon threshold (`1e-9`) for numerical stability.
+* **Synthetic Target Vector:** Anchored by the user's requested `energy` setting and auto-filled using dataset averages for remaining audio attributes.
 
-`Score = 1.0 - abs(target_energy - song_energy)`
-
-#### Phase 4 Experimental Pipeline (`score_song_experimental_weights`)
-To evaluate structural bias, an experimental configuration was added to shift the balance of power:
-1. **Genre Match (`+1.0` point):** The categorical weight was cut in half to prevent genre from completely overpowering user mood.
-2. **Mood Match (`+1.0` point):** Maintained constant to serve as a baseline.
-3. **Energy Proximity (Up to `+2.0` points):** The continuous similarity fraction was scaled up by a multiplier of `2.0` to prioritize exact acoustic alignment over metadata labels:
-
-`Score = 2.0 * (1.0 - abs(target_energy - song_energy))`
+### 2. Baseline Pipeline (`score_song`)
+Our original rule-based algorithm operates via an additive point accumulator:
+* **Genre Match (`+2.0` points):** Direct bonus if the song category matches the favorite genre.
+* **Mood Match (`+1.0` point):** Secondary bonus if the semantic mood label matches.
+* **Energy Proximity (Up to `+1.0` point):** Calculated using absolute difference: `1.0 - abs(target_energy - song_energy)`.
 
 ---
 
-## Experiments and Evaluation Logs
+## Quickstart & CLI Usage
 
-### 1. Baseline System Stress Test Logs
-Tested against adversarial profiles to expose edge cases where hardcoded point spikes create unexpected overrides:
-
-```text
-🚀 STRESS TESTING: Profile 1: Paradoxical Request ('Anxious High-Energy Joy')
-   Criteria -> Genre: pop, Mood: sad, Target Energy: 0.95
----------------------------------------------------------------------------
- [1] Score: 2.98 | 'Gym Hero' by Max Pulse
-     (Actuals -> Genre: pop, Mood: intense, Energy: 0.93)
- [2] Score: 2.87 | 'Sunrise City' by Neon Echo
-     (Actuals -> Genre: pop, Mood: happy, Energy: 0.82)
- [3] Score: 1.0 | 'Spitfire' by The Prodigy
-     (Actuals -> Genre: electronic, Mood: aggressive, Energy: 0.95)
----------------------------------------------------------------------------
-
-🚀 STRESS TESTING: Profile 2: Genre-Defying Pure Vibe ('The Fluid Acoustic')
-   Criteria -> Genre: classical, Mood: focused, Target Energy: 0.1
----------------------------------------------------------------------------
- [1] Score: 1.7 | 'Focus Flow' by LoRoom
-     (Actuals -> Genre: lofi, Mood: focused, Energy: 0.4)
- [2] Score: 0.98 | 'Weightless' by Marconi Union
-     (Actuals -> Genre: ambient, Mood: calm, Energy: 0.12)
----------------------------------------------------------------------------
-```
-
-### 2. Phase 4 Data Sensitivity Experiment Logs
-Executing the identical adversarial profile battery using the adjusted `score_song_experimental_weights` logic:
-
-```text
-🚀 EXPERIMENTAL STRESS TESTING: Profile 1: Paradoxical Request ('Anxious High-Energy Joy')
-   Criteria -> Genre: pop, Mood: sad, Target Energy: 0.95
----------------------------------------------------------------------------
- [1] Score: 2.96 | 'Gym Hero' by Max Pulse
-     (Actuals -> Genre: pop, Mood: intense, Energy: 0.93)
- [2] Score: 2.74 | 'Sunrise City' by Neon Echo
-     (Actuals -> Genre: pop, Mood: happy, Energy: 0.82)
- [3] Score: 2.0 | 'Spitfire' by The Prodigy
-     (Actuals -> Genre: electronic, Mood: aggressive, Energy: 0.95)
----------------------------------------------------------------------------
-
-🚀 EXPERIMENTAL STRESS TESTING: Profile 2: Genre-Defying Pure Vibe ('The Fluid Acoustic')
-   Criteria -> Genre: classical, Mood: focused, Target Energy: 0.1
----------------------------------------------------------------------------
- [1] Score: 2.4 | 'Focus Flow' by LoRoom
-     (Actuals -> Genre: lofi, Mood: focused, Energy: 0.4)
- [2] Score: 1.96 | 'Weightless' by Marconi Union
-     (Actuals -> Genre: ambient, Mood: calm, Energy: 0.12)
----------------------------------------------------------------------------
-```
-
-### Key Analytical Takeaways
-* **The Genre "Bully" Effect:** In the baseline, matching the "pop" label provided an insurmountable `+2.0` point advantage. This forced the system to recommend a high-intensity workout song (*Gym Hero*) to a user explicitly requesting a "sad" emotional context.
-* **Sensitivity Shift:** Lowering the genre weight and doubling the energy multiplier allowed continuous characteristics to break through. Non-genre songs that precisely satisfied acoustic requirements (such as *Spitfire* at `0.95` energy and *Weightless* at `0.12` energy) saw their scores double, rendering recommendations significantly more reflective of actual listening textures.
-
----
-
-## Limitations and Risks
-* **Metadata Dependency:** The engine relies on binary string checking. If a track lacks an exact text match for a genre or mood, its score drops heavily regardless of its sonic qualities.
-* **Dataset Representation Gaps:** With a small catalog of 17 songs, complex user profiles (like high-energy sad pop or classical) lack target options, forcing suboptimal compromises.
-* **Linear Scaling Bias:** Fixed additive scores create structural hierarchies where a single arbitrarily high weight can overpower all other features combined.
-
----
-
-## Engineering Process Reflection
-
-### Core Learning Moments
-Building and stress-testing this recommendation system highlighted that simple sorting algorithms can easily introduce severe structural biases. I discovered that minor imbalances in how point rewards are weighted can entirely suppress user preferences, transforming an interactive playlist engine into a rigid filter. This experiment has changed how I perceive standard music streaming applications; I now recognize that behind every playlist recommendation lies an intricate math equation balancing organizational categorization defaults against raw mathematical measurements of personal taste.
-
-### AI Integration Insights
-Using AI tools throughout this process accelerated the transition from architectural design to test implementation. It proved highly effective for generating diverse mock datasets and expanding pipeline logic. However, human intervention was critical to identify where hardcoded weights were overpowering continuous math logic. Reviewing code execution results step-by-step made it clear that algorithms strictly follow mathematical point structures rather than subjective human intent.
-
-### Next Steps for Expansion
-To advance this engine, the recommendation scoring pipeline should move away from hardcoded additive metrics and shift toward a normalized vector space similarity framework, such as Cosine Similarity. This transition would evaluate songs along an evenly distributed dimensional plane rather than allowing a single dominant string feature to overpower others. Additionally, incorporating secondary real-world metadata attributes—such as *acousticness* or *danceability*—would establish a multi-layered model of sonic profiles. This development would empower the engine to identify fluid acoustic vibes even when users supply completely novel or mismatched genre labels.
-
-## Usage Examples (CLI)
-
-The project now includes a vector-based recommendation path that converts five numeric audio features (`energy`, `tempo_bpm`, `valence`, `danceability`, `acousticness`) into a normalized 5D vector and ranks tracks by cosine similarity against a target vector. The CLI runner at `src/main.py` builds a synthetic target vector (using the user's `energy` preference and dataset means for the other features) and prints both the vector-based recommendations and the original rule-based baseline for comparison.
-
-Run the CLI using the project's virtual environment Python from the repository root:
+Run the main CLI script using the virtual environment:
 
 ```bash
-./.venv/bin/python src/main.py
+./.venv/bin/python src/main.py [OPTIONS]
 ```
 
-Sample CLI output (trimmed):
+### Supported CLI Flags
 
+* `--mode [vector|baseline|both]`: Choose recommendation engine mode (default: `vector`).
+* `--top-k N`: Number of recommendations to return (default: `5`).
+
+### CLI Examples
+
+**Compare Vector vs. Legacy Baseline side-by-side:**
+```bash
+./.venv/bin/python src/main.py --mode both --top-k 5
 ```
+
+**Run Vector Mode only:**
+```bash
+./.venv/bin/python src/main.py --mode vector
+```
+
+### Sample Output
+
+```text
 Top recommendations (vector cosine):
-Gym Hero - Max Pulse
-Sunrise City - Neon Echo
+1. Gym Hero - Max Pulse
+2. Sunrise City - Neon Echo
 
 Top recommendations (baseline):
-Gym Hero - Score: 2.98
-Because: genre match (pop) (+2.0); mood match (happy) (+1.0); energy similarity (+0.98)
+1. Gym Hero - Score: 2.98
+   (genre match: pop [+2.0], mood match: happy [+1.0], energy similarity [+0.98])
 ```
 
-Notes and implementation details:
+---
 
-- Tempo normalization: `tempo_bpm` is min-max scaled across the dataset before building vectors (0.0 - 1.0 range).
-- Cosine similarity: implemented with a small epsilon (`1e-9`) to avoid division-by-zero for zero-magnitude vectors.
-- API: `Recommender.to_vector(song)` returns a normalized 5D vector; `Recommender.recommend_by_vector(target_vector, top_k)` returns top-K `Song` objects by cosine similarity.
-- Run tests:
+## Running Automated Tests
+
+Run the test suite via `pytest`:
 
 ```bash
 ./.venv/bin/pytest -q
 ```
 
-### New CLI modes
+---
 
-The CLI now supports three modes:
+## Key Takeaways & Analytical Insights
 
-- `--mode vector` (default): return recommendations by cosine similarity over the normalized 5D audio feature vector.
-- `--mode baseline`: return the original rule-based genre/mood/energy recommendations.
-- `--mode both`: show both vector-based and baseline recommendations in the same run.
-
-Example:
-
-```bash
-./.venv/bin/python src/main.py --mode both --top-k 5
-```
-
-This makes it easy to compare the new vector-based ranking with the legacy rule-based approach.
-
-#### Target vector construction
-
-The vector recommendation target is built from a synthetic `Song` value that uses:
-
-- the user’s requested `energy` target,
-- the dataset mean `tempo_bpm`,
-- the dataset mean `valence`,
-- the dataset mean `danceability`,
-- the dataset mean `acousticness`.
-
-This provides a stable anchor point in feature space while still respecting the user’s explicit energy preference.
+* **The Genre "Bully" Effect:** In the rule-based baseline, hardcoded string matches (`+2.0` points) easily overrode continuous acoustic attributes.
+* **Vector Balance:** Moving to 5D vector space allows multi-dimensional sonic features (`danceability`, `valence`, `acousticness`) to weigh in fairly without single-metadata locks.

@@ -1,0 +1,1 @@
+Please modify your requirement for your setup, for I had to tweek my version to run on a 2005 Pentium Dual CPU on a Dell computer.

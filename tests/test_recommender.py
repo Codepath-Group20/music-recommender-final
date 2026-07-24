@@ -81,3 +81,18 @@ def test_score_song_uses_hybrid_scoring_and_reason_strings():
         "mood match (happy) (+1.0)",
         "energy similarity (+1.00)",
     ]
+
+
+def test_recommender_supports_vector_conversion_and_cosine_recommendation():
+    rec = make_small_recommender()
+    song = rec.songs[0]
+
+    vector = rec.to_vector(song)
+    assert len(vector) == 5
+    assert all(isinstance(value, float) for value in vector)
+
+    target_vector = [0.8, 0.6, 0.9, 0.8, 0.2]
+    results = rec.recommend_by_vector(target_vector, top_k=2)
+
+    assert len(results) == 2
+    assert all(isinstance(song, Song) for song in results)

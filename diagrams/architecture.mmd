@@ -1,0 +1,31 @@
+flowchart TD
+    subgraph Input Phase
+        A[User Criteria: energy, genre, mood] --> B[Target Vector Builder]
+        C[songs.csv Catalog] --> D[Song Data Loader]
+    end
+
+    subgraph Feature Engineering & Normalization
+        C --> E[_compute_vector_bounds]
+        E -->|Min-Max Bounds| F[tempo_bpm Normalization]
+        D --> G[Song Dataclasses]
+        F --> G
+    end
+
+    subgraph Recommendation Engines
+        G --> H[Recommender.to_vector]
+        B -->|Synthetic Target Vector| I[Cosine Similarity Evaluator]
+        H -->|5D Track Vectors| I
+        G --> J[Baseline Point Accumulator]
+    end
+
+    subgraph Evaluation & Guardrails
+        I --> K{Epsilon Division Guard 1e-9}
+        K --> L[Top-K Cosine Ranking]
+        J --> M[Top-K Baseline Ranking]
+    end
+
+    subgraph Execution & CLI Output
+        L --> N[CLI Output Renderer]
+        M --> N
+        N --> O[User / Evaluation Logs]
+    end

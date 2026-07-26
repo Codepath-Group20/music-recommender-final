@@ -1,0 +1,23 @@
+flowchart TD
+    subgraph Inputs
+        A[User Target Criteria] --> B[Target Vector Generator]
+        C[songs.csv Catalog] --> D[Data Loader]
+    end
+
+    subgraph Processing Pipeline
+        D --> E[Recommender._compute_vector_bounds]
+        E --> F[5D Vector Normalization]
+        F --> G[Recommender.to_vector]
+    end
+
+    subgraph AI & Recommendation Logic
+        B --> H[Cosine Similarity Engine]
+        G --> H
+        D --> I[Rule-Based Baseline Accumulator]
+    end
+
+    subgraph Output & Testing
+        H --> J[Epsilon Guard 1e-9 Check]
+        J --> K[Top-K Recommendations]
+        I --> K
+    end

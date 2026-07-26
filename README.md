@@ -1,7 +1,7 @@
 # 🎧 Music Recommender System (Vector Engine & Hybrid Pipeline)
 
 ## Base Project & Summary
-* **Base Project:** Extension of CodePath Module 3 Music Recommender Simulation.
+* **Base Project:** Extension of CodePath Module 1–3 Music Recommender Simulation.
 * **Project Summary:** This system is an applied content-based music recommendation engine written in Python. It extends the original rule-based point accumulator into a normalized 5D vector space engine using Cosine Similarity to eliminate hardcoded categorical biases and evaluate tracks across continuous acoustic dimensions.
 
 ---
@@ -9,6 +9,7 @@
 ## How The System Works & Architecture
 
 ### System Architecture Diagram
+
 ```mermaid
 flowchart TD
     subgraph Inputs
@@ -37,8 +38,8 @@ flowchart TD
 
 ### Architecture Component Breakdown
 1. **Target Vector Builder:** Takes explicit user inputs (e.g., requested `energy`) and combines them with dataset-wide means (`valence`, `danceability`, `acousticness`, `tempo_bpm`) to build a normalized target vector in 5D space.
-2. **Min-Max Normalizer (`_compute_vector_bounds`):** Scales unbounded features like `tempo_bpm` across the dataset into a strict $[0.0, 1.0]$ range.
-3. **Cosine Similarity Engine (`recommend_by_vector`):** Calculates vector proximity in 5D space while protecting against mathematical errors using an epsilon boundary ($10^{-9}$).
+2. **Min-Max Normalizer (`_compute_vector_bounds`):** Scales unbounded features like `tempo_bpm` across the dataset into a strict 0.0 to 1.0 range.
+3. **Cosine Similarity Engine (`recommend_by_vector`):** Calculates vector proximity in 5D space while protecting against mathematical errors using an epsilon boundary (1e-9).
 4. **Baseline Engine (`score_song`):** Preserved for side-by-side benchmarking to show how rigid point additions can cause "genre bullying" over continuous audio features.
 
 ---
@@ -118,8 +119,8 @@ $ ./.venv/bin/python src/main.py --mode vector --top-k 2
     * Cosine distance calculation accuracy.
     * Top-K ranking precision and boundary safety.
 * **Mathematical Guardrails:**
-  * **Epsilon Guard ($10^{-9}$):** Prevents zero-division errors when encountering zero-magnitude or uninitialized feature vectors.
-  * **Data Integrity Checks:** Pre-processes dirty/missing dataset rows through `data/songs_cleaned.csv` to ensure numerical bounds stay valid.
+  * **Epsilon Guard (1e-9):** Prevents zero-division errors when encountering zero-magnitude or uninitialized feature vectors.
+  * **Data Integrity Checks:** Pre-processes dirty or missing dataset rows through `data/songs_cleaned.csv` to ensure numerical bounds stay valid.
 
 ---
 

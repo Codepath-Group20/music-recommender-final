@@ -1,7 +1,7 @@
 # 🎧 Music Recommender System (Vector Engine & Hybrid Pipeline)
 
 ## Base Project & Summary
-* **Base Project:** Extension of CodePath Module 1–3 Music Recommender Simulation.
+* **Base Project:** Extension of CodePath Module 3 Music Recommender Simulation.
 * **Project Summary:** This system is an applied content-based music recommendation engine written in Python. It extends the original rule-based point accumulator into a normalized 5D vector space engine using Cosine Similarity to eliminate hardcoded categorical biases and evaluate tracks across continuous acoustic dimensions.
 
 ---
@@ -54,7 +54,7 @@ flowchart TD
 
 1. **Clone & Set Up Environment:**
    ```bash
-   git clone [https://github.com/your-username/music-recommender-final.git](https://github.com/your-username/music-recommender-final.git)
+   git clone [https://github.com/Codepath-Group20/music-recommender-final.git](https://github.com/Codepath-Group20/music-recommender-final.git)
    cd music-recommender-final
    python3 -m venv .venv
    source .venv/bin/activate
@@ -116,7 +116,7 @@ $ ./.venv/bin/python src/main.py --mode vector --top-k 2
     * Min-max normalization bounds on unbounded attributes (`tempo_bpm`).
     * Correct feature vector generation via `Recommender.to_vector`.
     * Cosine distance calculation accuracy.
-    * Top-$K$ ranking precision and boundary safety.
+    * Top-K ranking precision and boundary safety.
 * **Mathematical Guardrails:**
   * **Epsilon Guard ($10^{-9}$):** Prevents zero-division errors when encountering zero-magnitude or uninitialized feature vectors.
   * **Data Integrity Checks:** Pre-processes dirty/missing dataset rows through `data/songs_cleaned.csv` to ensure numerical bounds stay valid.
@@ -139,4 +139,3 @@ $ ./.venv/bin/python src/main.py --mode vector --top-k 2
 ### Portfolio Reflection
 > "Building this system demonstrated how subtle algorithmic decisions drastically affect recommendation behavior. Transitioning from hardcoded point accumulator rules to a continuous 5D vector space highlighted the importance of mathematical guardrails, robust feature scaling, and bias prevention in AI engineering."
 
-* **Loom Video Walkthrough:** *(Optional: Add link here if recorded)*
